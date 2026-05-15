@@ -20,6 +20,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import sys
 import time
 from typing import Optional
@@ -27,9 +28,11 @@ from typing import Optional
 # --- Per-project config resolution (davidamom fork) ---------------------------
 # claude-seo auto-detects the Claude Code project it runs in by walking up from
 # the current directory to the nearest ancestor containing a `.claude/` dir.
-# Each project gets an isolated config dir under ~/.config/claude-seo/projects/,
-# so credentials for different clients never mix. From a project subfolder it
-# resolves to the same project. Falls back to the global dir outside any project.
+# Each project gets a stable id, pinned at `<root>/.claude/.seo-project-id`, and
+# an isolated config dir under ~/.config/claude-seo/projects/<id>/. Because the
+# id is pinned inside the project, renaming or moving the project folder does
+# not break the link. From a project subfolder it resolves to the same project.
+# Falls back to the global dir outside any project.
 _CONFIG_TEMPLATE = {
     "service_account_path": "",
     "oauth_client_path": "",
@@ -39,12 +42,9 @@ _CONFIG_TEMPLATE = {
 }
 
 
-def _project_key(root: str) -> str:
-    """Stable per-project key: <slug>-<6-hex hash of the absolute path>."""
-    name = os.path.basename(os.path.abspath(root).rstrip("\\/")) or "root"
-    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "project"
-    digest = hashlib.sha1(os.path.normcase(os.path.abspath(root)).encode("utf-8")).hexdigest()
-    return f"{slug}-{digest[:6]}"
+def _slug(name: str) -> str:
+    """Filesystem-safe slug from a folder name."""
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "project"
 
 
 def _find_project_root(start: str) -> Optional[str]:
@@ -64,12 +64,38 @@ def _find_project_root(start: str) -> Optional[str]:
         current = parent
 
 
+def _project_id(root: str) -> str:
+    """Stable project id, pinned in `<root>/.claude/.seo-project-id`.
+
+    Generated once on first use and reused thereafter, so renaming or moving the
+    project folder keeps the same config dir. Falls back to a deterministic
+    path-derived id only if the pin file cannot be written.
+    """
+    id_file = os.path.join(root, ".claude", ".seo-project-id")
+    try:
+        with open(id_file, encoding="utf-8") as handle:
+            pinned = handle.read().strip()
+        if pinned:
+            return pinned
+    except OSError:
+        pass
+    slug = _slug(os.path.basename(os.path.abspath(root).rstrip("\\/")))
+    new_id = f"{slug}-{secrets.token_hex(3)}"
+    try:
+        with open(id_file, "w", encoding="utf-8") as handle:
+            handle.write(new_id + "\n")
+        return new_id
+    except OSError:
+        digest = hashlib.sha1(os.path.normcase(os.path.abspath(root)).encode("utf-8")).hexdigest()
+        return f"{slug}-{digest[:6]}"
+
+
 def resolve_config_dir() -> str:
     """Resolve the config dir for the current project, creating it on first use."""
     global_dir = os.path.expanduser("~/.config/claude-seo")
     root = _find_project_root(os.getcwd())
     config_dir = global_dir if root is None else os.path.join(
-        global_dir, "projects", _project_key(root))
+        global_dir, "projects", _project_id(root))
     try:
         os.makedirs(config_dir, exist_ok=True)
         config_file = os.path.join(config_dir, "google-api.json")
