@@ -1,11 +1,11 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "agricidaniel-seo",
+  "name": "davidamom-seo",
   "owner": {
-    "name": "AgriciDaniel"
+    "name": "davidamom (private fork of AgriciDaniel/claude-seo)"
   },
   "metadata": {
-    "description": "Comprehensive SEO analysis plugin for Claude Code. 25 sub-skills and 18 sub-agents covering technical SEO, E-E-A-T, content briefs, schema markup, GEO, local SEO, semantic clustering, e-commerce SEO, international SEO, and PDF reporting."
+    "description": "[Fork] claude-seo with per-project auto-detected config isolation. Comprehensive SEO analysis plugin for Claude Code. 25 sub-skills and 18 sub-agents covering technical SEO, E-E-A-T, content briefs, schema markup, GEO, local SEO, semantic clustering, e-commerce SEO, international SEO, and PDF reporting."
   },
   "plugins": [
     {
