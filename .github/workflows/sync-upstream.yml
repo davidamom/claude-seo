@@ -1,0 +1,40 @@
+name: Sync fork with upstream
+
+# Keeps this fork (davidamom/claude-seo) in sync with upstream
+# (AgriciDaniel/claude-seo) automatically, preserving the fork's own commits.
+# Runs daily; can also be triggered manually from the Actions tab.
+# On a merge conflict the run fails and GitHub notifies you — resolve it locally.
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily, 06:00 UTC (03:00 BRT)
+  workflow_dispatch: {}     # manual "Run workflow" button
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork (full history)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote and fetch
+        run: |
+          git remote add upstream https://github.com/AgriciDaniel/claude-seo.git || true
+          git fetch upstream
+
+      - name: Merge upstream/main (preserving fork commits)
+        run: git merge upstream/main --no-edit
+
+      - name: Push to fork
+        run: git push origin main
