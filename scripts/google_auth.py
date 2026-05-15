@@ -48,10 +48,15 @@ def _project_key(root: str) -> str:
 
 
 def _find_project_root(start: str) -> Optional[str]:
-    """Nearest ancestor of `start` (inclusive) that contains a `.claude/` dir."""
+    """Nearest ancestor of `start` (inclusive) that contains a `.claude/` dir.
+
+    The user home directory is skipped: its `~/.claude/` is Claude Code's global
+    config directory, not a project marker.
+    """
+    home = os.path.normcase(os.path.abspath(os.path.expanduser("~")))
     current = os.path.abspath(start)
     while True:
-        if os.path.isdir(os.path.join(current, ".claude")):
+        if os.path.normcase(current) != home and os.path.isdir(os.path.join(current, ".claude")):
             return current
         parent = os.path.dirname(current)
         if parent == current:
