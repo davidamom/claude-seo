@@ -16,14 +16,69 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import os
+import re
 import sys
 import time
 from typing import Optional
 
-CONFIG_PATH = os.path.expanduser("~/.config/claude-seo/google-api.json")
-TOKEN_PATH = os.path.expanduser("~/.config/claude-seo/oauth-token.json")
+# --- Per-project config resolution (davidamom fork) ---------------------------
+# claude-seo auto-detects the Claude Code project it runs in by walking up from
+# the current directory to the nearest ancestor containing a `.claude/` dir.
+# Each project gets an isolated config dir under ~/.config/claude-seo/projects/,
+# so credentials for different clients never mix. From a project subfolder it
+# resolves to the same project. Falls back to the global dir outside any project.
+_CONFIG_TEMPLATE = {
+    "service_account_path": "",
+    "oauth_client_path": "",
+    "default_property": "",
+    "ga4_property_id": "",
+    "api_key": "",
+}
+
+
+def _project_key(root: str) -> str:
+    """Stable per-project key: <slug>-<6-hex hash of the absolute path>."""
+    name = os.path.basename(os.path.abspath(root).rstrip("\\/")) or "root"
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "project"
+    digest = hashlib.sha1(os.path.normcase(os.path.abspath(root)).encode("utf-8")).hexdigest()
+    return f"{slug}-{digest[:6]}"
+
+
+def _find_project_root(start: str) -> Optional[str]:
+    """Nearest ancestor of `start` (inclusive) that contains a `.claude/` dir."""
+    current = os.path.abspath(start)
+    while True:
+        if os.path.isdir(os.path.join(current, ".claude")):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:
+            return None
+        current = parent
+
+
+def resolve_config_dir() -> str:
+    """Resolve the config dir for the current project, creating it on first use."""
+    global_dir = os.path.expanduser("~/.config/claude-seo")
+    root = _find_project_root(os.getcwd())
+    config_dir = global_dir if root is None else os.path.join(
+        global_dir, "projects", _project_key(root))
+    try:
+        os.makedirs(config_dir, exist_ok=True)
+        config_file = os.path.join(config_dir, "google-api.json")
+        if root is not None and not os.path.exists(config_file):
+            with open(config_file, "w", encoding="utf-8") as handle:
+                json.dump(_CONFIG_TEMPLATE, handle, indent=2)
+    except OSError:
+        pass
+    return config_dir
+
+
+_CONFIG_DIR = resolve_config_dir()
+CONFIG_PATH = os.path.join(_CONFIG_DIR, "google-api.json")
+TOKEN_PATH = os.path.join(_CONFIG_DIR, "oauth-token.json")
 
 # Service-to-scope mapping
 SCOPES = {
