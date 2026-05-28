@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-05-17
+
+v2 is backward-compatible by design — every v1.x command, script signature, and skill entry point still works. The release lands a hardened SSRF + DNS-rebinding safety layer, shared headless rendering across every fetcher, QRG-aligned content gates, four new Schema.org generators, five new MCP extensions, and multi-platform portability. Full narrative in [`docs/MIGRATION-v1-to-v2.md`](docs/MIGRATION-v1-to-v2.md).
+
+### Highlights
+
+- 248 tests (6.4× the v1.9.9 baseline of 39), every known SSRF bypass class closed at parse time.
+- 5 new MCP extensions: Ahrefs, SE Ranking, Profound, Bing Webmaster, Unlighthouse.
+- 4 new Schema.org generators: Reservation, OrderAction (potentialAction), DiscussionForumPosting, ProfilePage.
+- Multi-platform portability for Codex CLI, Cline, Aider (alongside existing Cursor + Antigravity).
+
+### Added
+
+- **Foundation:** `scripts/url_safety.py` (canonical SSRF + DNS-rebinding module, 83 test cases), `scripts/render_page.py` (shared Playwright Chromium renderer with `--mode auto` SPA detection, trafilatura extraction, htmldate publication-date extraction, 27 test cases). 8 fetcher subagents (seo-technical, seo-content, seo-schema, seo-geo, seo-local, seo-ecommerce, seo-backlinks, seo-sxo) now route through `render_page`.
+- **Content quality:** `content_quality.py` (QRG filler / AI-pattern / information-density scorer), `content_humanize.py` (40+ deterministic AI-phrasing replacements), `content_verify.py` (claim extraction + citation-gap detection), `domain_history.py` (WHOIS-driven expired-domain abuse check), `seo_updates.py` + `data/google-updates.json` (18 primary-source-verified Google updates, 1 documented-unverified gap-analysis claim).
+- **Technical depth:** `preload_check.py` (Speculation Rules + bfcache + prerender + LCP preload audit), `indexnow_submit.py` (Bing/Yandex/Seznam/Naver IndexNow submitter), `lcp_subparts.py` (LCP decomposition via CrUX), `unlighthouse_run.py` (multi-page Lighthouse via Unlighthouse CLI).
+- **Schema completeness:** `schema_generate.py` (`reservation`, `order`, `discussion`, `profile` subcommands), `schema_ecommerce_validate.py` (Product schema policy validator: `hasMerchantReturnPolicy`, `shippingDetails`, `MemberProgram`, EU `energyEfficiencyClass`, `ProductGroup`), reference doc `skills/seo-schema/references/deprecated-types-2024-2026.md`.
+- **AI search:** `parasite_risk.py` (site-reputation-abuse risk scanner per Nov 2024 Google policy), `skills/seo-geo/references/llmstxt-evidence.md` (evidence-based reframe of llms.txt as dev-tooling, not citation lever).
+- **Local + international + privacy:** `gbp_deprecation_lint.py` (retired GBP chat / `.business.site` / Q&A detector), `skills/seo-google/references/dma-consent-mode-v2.md` (EU CTR diagnostic + softened cookieless framing), `skills/seo-hreflang/references/machine-translation-qa.md` (untranslated-MT detection per Jan 2025 QRG §4.6.5).
+- **Portability:** `portability_check.py` (cross-platform SKILL.md frontmatter lint), AGENTS.md tool-name compatibility table for Codex CLI, Cline, Aider.
+- **Release signing:** `release_sign.py` (SHA-256 manifest of every git-tracked file), `verify_release.py` (verify a checkout against a signed manifest).
+- **Governance:** `.github/CODEOWNERS`, `.github/dependabot.yml` extended with npm ecosystem, `.github/workflows/v2.yml` (workflow_dispatch only), `SECURITY.md` uplift (threat model, 90-day coordinated disclosure timeline, residual risks).
+
+### Changed
+
+- `scripts/google_auth.py:validate_url` now delegates to `url_safety.validate_url`. Strict variant available as `url_safety.validate_url_strict`.
+- `scripts/fetch_page.py` exposes `--render {auto,always,never}`. Default `auto` runs raw fetch then renders if SPA signals detected; `always` forces Playwright; `never` preserves v1 behaviour.
+- `scripts/capture_screenshot.py` uses `url_safety.make_safe_playwright_route_handler` as defense-in-depth against subresource SSRF (data: allowed, private resolutions aborted, AF_UNSPEC IPv6-aware).
+- OAuth token files are now written with `os.open(path, O_WRONLY|O_CREAT|O_TRUNC, 0o600)` + explicit `os.fchmod(fd, 0o600)`. Legacy `0o644` files are remediated in place on next `_load_oauth_token`.
+- `plugin.json` / `marketplace.json` / `pyproject.toml` / `CITATION.cff` / `install.sh` / `install.ps1` / 32 SKILL.md files: version bumped to `2.0.0`. The 13-assertion manifest test (`tests/test_manifest_consistency.py`) gates this.
+
+### Fixed
+
+- **HIGH — DNS rebinding via redirect target.** `_pin_dns` previously intercepted only the originally-pinned hostname; redirect targets fell through to the unpatched resolver. Patched `socket.getaddrinfo` now validates every resolution while pinned. Closed in `a601268`.
+- **HIGH — Obfuscated IPv4 bypass in `validate_url`.** Decimal (`2130706433`), hex (`0x7f000001`), octal (`017700000001`), leading-zero (`127.0.0.001`, `0177.0.0.1`), and mixed-radix (`0x7f.0.0.1`) forms all returned safe. New `normalize_hostname()` canonicalizes via `socket.inet_aton`. Closed in `3c595c2`.
+- **HIGH — FQDN trailing-dot bypass.** `metadata.google.internal.` (single trailing dot) bypassed the exact-string blocklist. `normalize_hostname` now strips a single trailing dot. Closed in `3c595c2`.
+- **MEDIUM — IPv6 blind spot in Playwright route handler.** Resolver queried only `AF_INET`. Now uses `AF_UNSPEC` to catch dual-stack subresources whose AAAA record points at a private range. Closed in `3c595c2`.
+- **LOW — OAuth file-permission TOCTOU.** `os.open`'s mode argument is ignored if the file pre-existed. Explicit `os.fchmod(fd, 0o600)` on the open fd closes the race. Closed in `3c595c2`.
+
+### Breaking
+
+Two intentional behavioural breaks; full mitigation guidance in `docs/MIGRATION-v1-to-v2.md`.
+
+1. `scripts/backlinks_auth.py` no longer ships a silent SSRF-disabled fallback. If `url_safety` cannot be imported, the module raises `RuntimeError` at import time.
+2. `seo-schema` flags six retired rich-result types as **Critical** findings (`Vehicle`, `ClaimReview`, `EstimatedSalary`, `LearningVideo`, `SpecialAnnouncement`, `CourseInfo` carousel). Replacements documented in `skills/seo-schema/references/deprecated-types-2024-2026.md`.
+
+### Test coverage delta
+
+| Suite | v1.9.9 | v2.0.0 |
+|---|---:|---:|
+| Pre-existing (manifest + lazy + sync FLOW) | 39 | 39 |
+| `url_safety` (new) | — | 83 |
+| `render_page` (new) | — | 27 |
+| Content quality (new) | — | 25 |
+| Technical depth (new) | — | 17 |
+| Schema v2 (new) | — | 17 |
+| Parasite risk + extensions (new) | — | 22 |
+| GBP lint + polish (new) | — | 8 |
+| Portability (new) | — | 10 |
+| **Total** | **39** | **248** |
+
 ## [1.9.9] - 2026-05-11
 
 Final 1.x patch release. v2 is in design; this release leaves the v1.x

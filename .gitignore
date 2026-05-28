@@ -51,8 +51,16 @@ node_modules/
 *.zip
 *.tar.gz
 
-# Screenshots (generated during analysis)
-screenshots/
+# Screenshots: ignore directory contents by default (audit outputs grow fast);
+# README-referenced assets are whitelisted below. Note: we use screenshots/*
+# (not screenshots/) so the `!screenshots/foo` re-include rules work.
+screenshots/*
+!screenshots/seo-command-demo.gif
+!screenshots/seo-audit-demo.gif
+
+# Brand kit reference renders (PNG snapshots of the SVG comparison page).
+# The SVGs themselves under assets/ ship; the PNGs are scratch references.
+branding/*.png
 
 # Temporary analysis files
 *-AUDIT-REPORT.md
@@ -148,6 +156,9 @@ claude-seo-v*-release.html
 video-script-*.md
 youtube-shorts-*.md
 youtube-description*.md
+
+# Release decks + Remotion video work (mirrors claude-ads pattern: in-tree, untracked)
+presentations/
 
 # Internal implementation plans / specs (working notes, not user docs)
 docs/superpowers/

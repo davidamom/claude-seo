@@ -28,6 +28,13 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Register `merge=ours` driver (required by .gitattributes)
+        # The driver is a security-sensitive setting that lives in local git
+        # config (never in the committed tree). Without this, paths pinned in
+        # .gitattributes via `merge=ours` fall back to the default 3-way
+        # merge and conflicts on those paths fail the workflow.
+        run: git config merge.ours.driver true
+
       - name: Add upstream remote and fetch
         run: |
           git remote add upstream https://github.com/AgriciDaniel/claude-seo.git || true

@@ -1,0 +1,9 @@
+# Files where the fork's version must always win over upstream during merges.
+# The `merge=ours` driver requires `git config merge.ours.driver true` to be
+# set in the local clone (sync-upstream.sh and the CI workflow do this).
+#
+# Why these are pinned to the fork:
+#  - .claude-plugin/marketplace.json: identifies this fork as the
+#    `davidamom-seo` marketplace; upstream's name would collide and the
+#    description line carries fork-specific copy.
+.claude-plugin/marketplace.json merge=ours

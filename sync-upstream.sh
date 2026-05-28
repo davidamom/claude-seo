@@ -15,6 +15,11 @@ if ! git remote | grep -qx upstream; then
   git remote add upstream https://github.com/AgriciDaniel/claude-seo.git
 fi
 
+# Register the `merge=ours` driver used by .gitattributes. This must live in
+# local git config (not the committed tree) for security; doing it idempotently
+# here means every fresh clone gets it on first sync without manual setup.
+git config merge.ours.driver true
+
 echo "==> Fetching upstream..."
 git fetch upstream
 
