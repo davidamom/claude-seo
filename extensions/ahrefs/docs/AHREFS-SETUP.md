@@ -1,6 +1,6 @@
 # Ahrefs extension setup
 
-Wires the official [`@ahrefs/mcp`](https://www.npmjs.com/package/@ahrefs/mcp)
+Wires the official [`@ahrefs/mcp@0.0.11`](https://www.npmjs.com/package/@ahrefs/mcp)
 server into your Claude Code session so the `seo-ahrefs` skill can call
 live Ahrefs data.
 
@@ -15,7 +15,7 @@ The installer:
 
 1. Verifies Python 3 + Node 18+ are on `$PATH`.
 2. Prompts for your Ahrefs API token (input is hidden).
-3. Pre-warms the `@ahrefs/mcp` npm package via `npx --yes` so the first
+3. Pre-warms the `@ahrefs/mcp@0.0.11` npm package via `npx --yes` so the first
    MCP call doesn't spend 10+ seconds downloading.
 4. Copies `skills/seo-ahrefs/SKILL.md` into `~/.claude/skills/seo-ahrefs/`.
 5. Atomically writes `mcpServers.ahrefs` into `~/.claude/settings.json`
@@ -31,7 +31,7 @@ Open a new Claude Code session and ask:
 ```
 
 If you see "Ahrefs MCP not connected", the npm package is not yet cached.
-Re-run the installer to pre-warm or run `npx --yes --package=@ahrefs/mcp ahrefs-mcp --help` manually.
+Re-run the installer to pre-warm or run `npx --yes --package=@ahrefs/mcp@0.0.11 mcp --help` manually.
 
 ## Rotate token
 

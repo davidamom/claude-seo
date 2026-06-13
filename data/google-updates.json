@@ -6,7 +6,7 @@
     "https://developers.google.com/search/updates",
     "https://blog.google/products/search/"
   ],
-  "last_verified": "2026-05-17",
+  "last_verified": "2026-05-25",
   "policy": "Every entry must cite a Google-owned URL. Third-party-only claims belong in unverified[]. Bump last_verified each time an entry is added or revised.",
   "_schema_doc": {
     "updates[]": {
@@ -150,18 +150,35 @@
       "kind": "core",
       "source": "https://developers.google.com/search/updates/ranking-update-history",
       "notes": "18-day rollout. Third core update of 2025. Reported eCommerce skew per Amsive analysis."
+    },
+    {
+      "date": "2026-03-27",
+      "name": "March 2026 Core Update",
+      "kind": "core",
+      "source": "https://developers.google.com/search/updates/ranking-update-history",
+      "notes": "Started Mar 27, completed Apr 8 (12-day rollout). First core update of 2026. Promoted from unverified[] after Google status-dashboard confirmation."
+    },
+    {
+      "date": "2026-05-07",
+      "name": "FAQ rich results retired",
+      "kind": "schema",
+      "source": "https://developers.google.com/search/docs/appearance/structured-data/faqpage",
+      "notes": "FAQ rich results no longer shown for any site (supersedes the Aug 2023 gov/health restriction). Rich Results Test + report support drops Jun 2026; Search Console API support removed Aug 2026. Use QAPage for genuine single-question pages; FAQPage still aids AI/LLM citation as an entity signal."
+    },
+    {
+      "date": "2026-05-19",
+      "name": "Google I/O 2026: Gemini 3.5 Flash powers AI Mode",
+      "kind": "product",
+      "source": "https://blog.google/products-and-platforms/products/search/search-io-2026/",
+      "notes": "Gemini 3.5 Flash becomes the default model in AI Mode globally. AI Mode surpassed 1B+ monthly users. New intelligent Search box; Information Agents, generative UI, and agentic checkout rolling out summer 2026."
+    },
+    {
+      "date": "2026-05-21",
+      "name": "May 2026 Core Update",
+      "kind": "core",
+      "source": "https://developers.google.com/search/updates/ranking-update-history",
+      "notes": "Up to 2-week rollout. Second core update of 2026. Global, all languages. Google: 'a regular update designed to better surface relevant, satisfying content from all types of sites.'"
     }
   ],
-  "unverified": [
-    {
-      "date": "2026-03-xx",
-      "claim": "Third-party reports of a March 2026 core update exceeding December 2025 volatility",
-      "third_party_sources": [
-        "https://dataslayer.ai/",
-        "https://roastweb.com/"
-      ],
-      "primary_source_check": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
-      "status": "NOT confirmed against Google's primary source as of 2026-05-17. Do not encode in audit recommendations until confirmed."
-    }
-  ]
+  "unverified": []
 }

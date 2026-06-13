@@ -9,7 +9,7 @@
 # uninstaller.
 #
 # Plugin-install users should use Claude Code's own command instead:
-#   /plugin uninstall claude-seo@agricidaniel-seo
+#   /plugin uninstall claude-seo@agricidaniel-claude-seo
 #   /plugin marketplace remove AgriciDaniel/claude-seo
 set -euo pipefail
 

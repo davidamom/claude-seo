@@ -40,35 +40,35 @@ but use exactly the same overall structure.
 
 | New | What it does |
 |---|---|
-| `python scripts/content_quality.py` | QRG-aligned filler / AI-pattern / information-density scorer |
-| `python scripts/content_humanize.py` | 40+ deterministic AI-phrasing replacements |
-| `python scripts/content_verify.py` | Claim extraction + citation-gap detection |
-| `python scripts/domain_history.py` | WHOIS-driven expired-domain abuse check |
-| `python scripts/seo_updates.py` | Primary-source Google updates changelog |
+| `python3 scripts/content_quality.py` | QRG-aligned filler / AI-pattern / information-density scorer |
+| `python3 scripts/content_humanize.py` | 40+ deterministic AI-phrasing replacements |
+| `python3 scripts/content_verify.py` | Claim extraction + citation-gap detection |
+| `python3 scripts/domain_history.py` | WHOIS-driven expired-domain abuse check |
+| `python3 scripts/seo_updates.py` | Primary-source Google updates changelog |
 | `data/google-updates.json` | 18 confirmed Google updates 2024-03 → 2025-12 |
 
 ### Technical / CWV depth (Phase C)
 
 | New | What it does |
 |---|---|
-| `python scripts/preload_check.py` | Speculation Rules + bfcache + prerender + LCP preload audit |
-| `python scripts/indexnow_submit.py` | Submit up to 10k URLs to IndexNow (Bing/Yandex/Seznam/Naver) |
-| `python scripts/lcp_subparts.py` | LCP decomposition via CrUX (TTFB, load delay, load duration, render delay) |
-| `python scripts/unlighthouse_run.py` | Multi-page Lighthouse via the MIT Unlighthouse CLI |
+| `python3 scripts/preload_check.py` | Speculation Rules + bfcache + prerender + LCP preload audit |
+| `python3 scripts/indexnow_submit.py` | Submit up to 10k URLs to IndexNow (Bing/Yandex/Seznam/Naver) |
+| `python3 scripts/lcp_subparts.py` | LCP decomposition via CrUX (TTFB, load delay, load duration, render delay) |
+| `python3 scripts/unlighthouse_run.py` | Multi-page Lighthouse via the MIT Unlighthouse CLI |
 
 ### Schema completeness (Phase D)
 
 | New | What it does |
 |---|---|
-| `python scripts/schema_generate.py reservation/order/discussion/profile` | JSON-LD generators for the four high-leverage v2 types |
-| `python scripts/schema_ecommerce_validate.py` | Product schema policy validator (hasMerchantReturnPolicy, shippingDetails, MemberProgram, EU energy class, ProductGroup) |
+| `python3 scripts/schema_generate.py reservation/order/discussion/profile` | JSON-LD generators for the four high-leverage v2 types |
+| `python3 scripts/schema_ecommerce_validate.py` | Product schema policy validator (hasMerchantReturnPolicy, shippingDetails, MemberProgram, EU energy class, ProductGroup) |
 | `skills/seo-schema/references/deprecated-types-2024-2026.md` | Reference: every retired rich-result type with its replacement |
 
 ### AI search + 5 new extensions (Phase E)
 
 | New | What it does |
 |---|---|
-| `python scripts/parasite_risk.py` | Site-reputation-abuse risk scanner per Nov 2024 Google policy |
+| `python3 scripts/parasite_risk.py` | Site-reputation-abuse risk scanner per Nov 2024 Google policy |
 | `extensions/ahrefs/` | Official `@ahrefs/mcp` server wired into Claude Code |
 | `extensions/seranking/` | AI Share-of-Voice across ChatGPT/Gemini/Perplexity/AI Overviews/AI Mode |
 | `extensions/profound/` | Time-series LLM citation tracker |
@@ -80,7 +80,7 @@ but use exactly the same overall structure.
 
 | New | What it does |
 |---|---|
-| `python scripts/gbp_deprecation_lint.py` | Detects retired GBP chat / `.business.site` / Q&A references |
+| `python3 scripts/gbp_deprecation_lint.py` | Detects retired GBP chat / `.business.site` / Q&A references |
 | `skills/seo-google/references/dma-consent-mode-v2.md` | EU CTR diagnostic + softened cookieless framing |
 | `skills/seo-hreflang/references/machine-translation-qa.md` | Untranslated-MT detection per Jan 2025 QRG §4.6.5 |
 
@@ -89,15 +89,15 @@ but use exactly the same overall structure.
 | New | What it does |
 |---|---|
 | `AGENTS.md` (extended) | Codex CLI, Cline, Aider added to supported-harnesses list |
-| `python scripts/portability_check.py` | Cross-platform SKILL.md frontmatter lint |
+| `python3 scripts/portability_check.py` | Cross-platform SKILL.md frontmatter lint |
 | Tool-name compatibility table | Read/Write/Edit/Bash/Glob/Grep/WebFetch mappings across Codex/Cline/Aider/Cursor/Antigravity |
 
 ### Release signing (Phase H)
 
 | New | What it does |
 |---|---|
-| `python scripts/release_sign.py` | Generate a SHA-256 manifest of every git-tracked file |
-| `python scripts/verify_release.py` | Verify a checkout against a signed manifest |
+| `python3 scripts/release_sign.py` | Generate a SHA-256 manifest of every git-tracked file |
+| `python3 scripts/verify_release.py` | Verify a checkout against a signed manifest |
 
 ### Hardening
 
@@ -158,6 +158,8 @@ We considered but ultimately did **not** break the following:
 
 ## How to upgrade
 
+Caution: Prefer downloading, inspecting, then running remote scripts; the pipe-to-shell form below is the less-safe convenience option.
+
 ```bash
 # Pull v2.0.0
 curl -fsSL https://raw.githubusercontent.com/AgriciDaniel/claude-seo/main/install.sh | bash
@@ -169,7 +171,7 @@ pip install -r requirements.txt
 playwright install chromium
 
 # Verify manifest consistency
-python -m pytest tests/test_manifest_consistency.py -v
+python3 -m pytest tests/test_manifest_consistency.py -v
 ```
 
 That's it. The first time you run anything that touches

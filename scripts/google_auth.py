@@ -146,6 +146,33 @@ SERVICE_NAMES = {
     "ga4": "GA4 Data API v1beta",
 }
 
+_GOOGLE_API_KEY_PREFIX = "AI" + "za"
+_GOOGLE_API_KEY_RE = re.compile(_GOOGLE_API_KEY_PREFIX + r"[0-9A-Za-z_-]+")
+_GOOGLE_KEY_QUERY_RE = re.compile(r"([?&])key=[^&\s'\"<>)]*(&?)")
+_GOOGLE_KEY_BARE_RE = re.compile(r"\bkey=[^&\s'\"<>)]*")
+
+
+def google_api_key_headers(api_key: str) -> dict:
+    """Return the canonical header form for Google API key auth."""
+    return {"X-Goog-Api-Key": api_key}
+
+
+def redact_google_api_key(value: object) -> str:
+    """Remove Google API keys from exception/output strings."""
+    text = str(value)
+    def drop_query_key(match: re.Match) -> str:
+        separator, trailing_amp = match.groups()
+        if separator == "?" and trailing_amp:
+            return "?"
+        if separator == "&" and trailing_amp:
+            return "&"
+        return ""
+
+    text = _GOOGLE_KEY_QUERY_RE.sub(drop_query_key, text)
+    text = text.replace("?&", "?")
+    text = _GOOGLE_KEY_BARE_RE.sub("google_api_key_redacted", text)
+    return _GOOGLE_API_KEY_RE.sub("GOOGLE_API_KEY_REDACTED", text)
+
 
 def load_config() -> dict:
     """
@@ -821,7 +848,7 @@ Google SEO API Setup Instructions
 
    {
      "service_account_path": "/path/to/service_account.json",
-     "api_key": "AIzaSy...",
+     "api_key": "<GOOGLE_API_KEY>",
      "default_property": "sc-domain:example.com",
      "ga4_property_id": "properties/123456789"
    }

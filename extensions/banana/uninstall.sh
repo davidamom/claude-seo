@@ -19,9 +19,9 @@ main() {
             echo "  ℹ  Keeping nanobanana-mcp in settings.json (used by standalone skill)"
         else
             # No standalone skill, safe to remove MCP
-            python3 -c "
-import json, os
-settings_path = '${SETTINGS_FILE}'
+            python3 - "${SETTINGS_FILE}" <<'PY' 2>/dev/null || echo "  ⚠  Could not auto-remove MCP config. Remove 'nanobanana-mcp' from ~/.claude/settings.json manually."
+import json, os, sys
+settings_path = sys.argv[1]
 with open(settings_path, 'r') as f:
     settings = json.load(f)
 if 'mcpServers' in settings and 'nanobanana-mcp' in settings['mcpServers']:
@@ -33,7 +33,7 @@ if 'mcpServers' in settings and 'nanobanana-mcp' in settings['mcpServers']:
     print('  ✓ Removed nanobanana-mcp from settings.json')
 else:
     print('  ✓ No nanobanana-mcp entry in settings.json')
-" 2>/dev/null || echo "  ⚠  Could not auto-remove MCP config. Remove 'nanobanana-mcp' from ~/.claude/settings.json manually."
+PY
         fi
     fi
 

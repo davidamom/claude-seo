@@ -13,8 +13,12 @@ Hook configuration in ~/.claude/settings.json:
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/.claude/skills/seo/hooks/validate-schema.py \"$FILE_PATH\"",
-            "exitCodes": { "2": "block" }
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/run-python-hook.js",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/validate-schema.py",
+              "${tool_input.file_path}"
+            ]
           }
         ]
       }
@@ -106,8 +110,11 @@ def _validate_schema_object(obj: dict, block_num: int) -> List[str]:
     if schema_type in deprecated:
         errors.append(f"{prefix}: @type '{schema_type}' is {deprecated[schema_type]}")
 
-    # Check for restricted types used incorrectly
-    restricted = {"FAQPage": "restricted to government and healthcare sites only (Aug 2023)"}
+    # Check for restricted types used incorrectly.
+    # FAQPage is intentionally NOT flagged: Google retired FAQ rich results for
+    # all sites (May 7, 2026), but the markup still aids AI Mode / AI Overviews
+    # entity resolution, so it is valid to ship. See skills/seo-schema/SKILL.md.
+    restricted: dict = {}
     if schema_type in restricted:
         errors.append(f"{prefix}: @type '{schema_type}' is {restricted[schema_type]}; verify site qualifies")
 
@@ -125,7 +132,7 @@ def main():
 
     # Only validate HTML-like files
     valid_extensions = (".html", ".htm", ".jsx", ".tsx", ".vue", ".svelte", ".php", ".ejs")
-    if not filepath.endswith(valid_extensions):
+    if not filepath.lower().endswith(valid_extensions):
         sys.exit(0)
 
     # File-size guard: skip files >10MB to bound memory + hook latency.

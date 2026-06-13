@@ -58,6 +58,12 @@ def test_plugin_json_skill_count_matches_disk():
     )
 
 
+def test_plugin_json_description_fits_registry_limit():
+    """plugin.json description must stay below the Claude plugin registry limit."""
+    plugin = json.loads(PLUGIN_JSON.read_text())
+    assert len(plugin["description"]) < 500
+
+
 def test_plugin_json_subagent_count_matches_disk():
     """plugin.json description's 'N sub-agents' claim must equal agents/ count."""
     plugin = json.loads(PLUGIN_JSON.read_text())

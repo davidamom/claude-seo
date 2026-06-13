@@ -25,6 +25,9 @@ claude
 ```
 
 4. Re-run installer:
+
+Caution: Prefer downloading, inspecting, then running remote scripts; the pipe-to-shell form below is the less-safe convenience option.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AgriciDaniel/claude-seo/main/install.sh | bash
 ```
@@ -78,7 +81,7 @@ curl -fsSL https://raw.githubusercontent.com/AgriciDaniel/claude-seo/main/requir
 
 1. Install Python from [python.org](https://python.org) and check "Add to PATH"
 2. Or use the Windows launcher: `py -3 -m pip install -r requirements.txt`
-3. Use `python -m pip` instead of bare `pip`
+3. Use `python3 -m pip` instead of bare `pip`
 
 ---
 
@@ -94,7 +97,7 @@ playwright install chromium
 If that fails:
 ```bash
 pip install playwright
-python -m playwright install chromium
+python3 -m playwright install chromium
 ```
 
 ---

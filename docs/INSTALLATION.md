@@ -17,7 +17,7 @@ The recommended path. Inside Claude Code:
 
 ```
 /plugin marketplace add AgriciDaniel/claude-seo
-/plugin install claude-seo@agricidaniel-seo
+/plugin install claude-seo@agricidaniel-claude-seo
 ```
 
 ### Manual Install (Unix, macOS, Linux)
@@ -112,7 +112,7 @@ You should see a help message or prompt for a URL.
 If installed as a plugin:
 
 ```
-/plugin uninstall claude-seo@agricidaniel-seo
+/plugin uninstall claude-seo@agricidaniel-claude-seo
 /plugin marketplace remove AgriciDaniel/claude-seo
 ```
 
@@ -128,6 +128,8 @@ bash claude-seo/uninstall.sh
 ## Upgrading
 
 To upgrade to the latest version:
+
+Caution: Prefer downloading, inspecting, then running remote scripts; the pipe-to-shell form below is the less-safe convenience option.
 
 ```bash
 # Uninstall current version

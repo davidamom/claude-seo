@@ -12,6 +12,7 @@ Usage:
     python3 validate_setup.py
 """
 
+import argparse
 import json
 import shutil
 import sys
@@ -31,7 +32,16 @@ def check(label: str, passed: bool, detail: str = "") -> bool:
     return passed
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Validate the Claude Banana MCP server setup."
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
+    parse_args()
+
     print("Claude Banana - Setup Validation")
     print("=" * 40)
     results = []
