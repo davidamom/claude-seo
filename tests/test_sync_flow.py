@@ -140,6 +140,46 @@ def test_authed_headers_degrades_when_gh_missing(monkeypatch):
     assert "Authorization" not in headers
 
 
+def test_api_get_retries_unauthenticated_429_with_cli_token(monkeypatch):
+    """GitHub may return 429 instead of 403 when the anonymous pool is spent."""
+    sf = _load_sync_flow_module()
+    import io
+
+    rate_limited = sf.urllib.error.HTTPError(
+        "https://api.github.com/example", 429, "too many requests", {}, io.BytesIO()
+    )
+
+    class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        @staticmethod
+        def read(_limit):
+            return b'{"content":""}'
+
+    calls = []
+
+    def fake_urlopen(request, timeout):
+        calls.append(request)
+        if len(calls) == 1:
+            raise rate_limited
+        return _Response()
+
+    monkeypatch.setattr(sf.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(
+        sf,
+        "_authed_headers",
+        lambda: {**sf._base_headers(), "Authorization": "Bearer test-token"},
+    )
+
+    assert sf.api_get("file.md", None, sf._base_headers()) == {"content": ""}
+    assert len(calls) == 2
+    assert calls[1].get_header("Authorization") == "Bearer test-token"
+
+
 # ── Task 3 tests ──────────────────────────────────────────────────────────────
 
 def test_validate_github_url_blocks_non_github_host():

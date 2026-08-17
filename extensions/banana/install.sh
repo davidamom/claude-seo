@@ -154,6 +154,18 @@ PY
     cp "${SOURCE_DIR}/scripts/"*.py "${SKILL_DIR}/scripts/"
     cp "${SOURCE_DIR}/references/"*.md "${SKILL_DIR}/references/"
 
+    # Rewrite only files copied by this extension install. Manual installs do
+    # not receive plugin bin/ PATH injection.
+    for installed_doc in "${SKILL_DIR}/SKILL.md" "${SKILL_DIR}/references/"*.md "${AGENT_DIR}/seo-image-gen.md"; do
+        [ -f "${installed_doc}" ] || continue
+        temp_doc="${installed_doc}.claude-seo-tmp"
+        sed -e 's#claude-seo run#"$HOME/.claude/skills/seo/bin/claude-seo" run#g' \
+            -e 's#claude-seo setup#"$HOME/.claude/skills/seo/bin/claude-seo" setup#g' \
+            -e 's#claude-seo doctor#"$HOME/.claude/skills/seo/bin/claude-seo" doctor#g' \
+            "${installed_doc}" > "${temp_doc}"
+        mv "${temp_doc}" "${installed_doc}"
+    done
+
     # Pre-warm npm package without starting the MCP server binary.
     echo "→ Pre-downloading nanobanana-mcp..."
     npx --yes --package=@ycse/nanobanana-mcp@1.1.1 -- node -e "" >/dev/null 2>&1 || true
