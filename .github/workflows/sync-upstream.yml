@@ -43,5 +43,19 @@ jobs:
       - name: Merge upstream/main (preserving fork commits)
         run: git merge upstream/main --no-edit
 
+      - name: Keep fork-owned workflow files
+        # GITHUB_TOKEN nunca pode criar/alterar arquivos de workflow no push
+        # ("refusing to allow a GitHub App to ... without workflows permission").
+        # Foi isso que travou o sync diario de 20/07 a 17/08/2026, quando o
+        # upstream alterou ci.yml/v2.yml. Se o merge trouxer mudanca em
+        # .github/workflows, mantemos a versao do fork e avisamos: essas
+        # mudancas entram por merge manual (credencial de usuario) quando valer.
+        run: |
+          if ! git diff --quiet origin/main HEAD -- .github/workflows/; then
+            echo "::warning::Upstream alterou .github/workflows; mantida a versao do fork. Sincronize os workflows manualmente (git push de usuario) se quiser as mudancas."
+            git checkout origin/main -- .github/workflows/
+            git commit -m "sync: keep fork-owned .github/workflows (GITHUB_TOKEN nao empurra workflow)"
+          fi
+
       - name: Push to fork
         run: git push origin main
