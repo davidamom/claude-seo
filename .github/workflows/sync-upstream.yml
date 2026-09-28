@@ -40,21 +40,31 @@ jobs:
           git remote add upstream https://github.com/AgriciDaniel/claude-seo.git || true
           git fetch upstream
 
-      - name: Merge upstream/main (preserving fork commits)
-        run: git merge upstream/main --no-edit
-
-      - name: Keep fork-owned workflow files
+      - name: Merge upstream/main (preserving fork commits, workflows fork-owned)
         # GITHUB_TOKEN nunca pode criar/alterar arquivos de workflow no push
         # ("refusing to allow a GitHub App to ... without workflows permission").
-        # Foi isso que travou o sync diario de 20/07 a 17/08/2026, quando o
-        # upstream alterou ci.yml/v2.yml. Se o merge trouxer mudanca em
-        # .github/workflows, mantemos a versao do fork e avisamos: essas
-        # mudancas entram por merge manual (credencial de usuario) quando valer.
+        # Travou o sync de 20/07 a 17/08/2026 (upstream alterou ci.yml/v2.yml) e de
+        # 27/08 a 28/09/2026 (upstream ADICIONOU windows-smoke.yml: o checkout de
+        # origin/main restaura arquivos alterados, mas nao apaga arquivo novo, e o
+        # merge commit ja continha o arquivo). Por isso o merge e feito SEM commit:
+        # restaura os workflows do fork, remove os que o upstream adicionou e so
+        # entao commita. Nenhum commit empurrado toca em .github/workflows.
+        # Mudancas de workflow do upstream entram por merge manual (push de usuario).
         run: |
-          if ! git diff --quiet origin/main HEAD -- .github/workflows/; then
-            echo "::warning::Upstream alterou .github/workflows; mantida a versao do fork. Sincronize os workflows manualmente (git push de usuario) se quiser as mudancas."
-            git checkout origin/main -- .github/workflows/
-            git commit -m "sync: keep fork-owned .github/workflows (GITHUB_TOKEN nao empurra workflow)"
+          git merge upstream/main --no-commit --no-edit
+          git checkout origin/main -- .github/workflows/
+          added=$(git diff --cached --name-only --diff-filter=A origin/main -- .github/workflows/)
+          if [ -n "$added" ]; then
+            echo "::warning::Upstream adicionou workflow(s) nao trazidos (fork-owned): $added"
+            for f in $added; do git rm -q --cached -- "$f"; rm -f "$f"; done
+          fi
+          if ! git diff --quiet upstream/main -- .github/workflows/; then
+            echo "::warning::Workflows do fork divergem do upstream; sincronize manualmente (git push de usuario) se quiser as mudancas."
+          fi
+          if git diff --cached --quiet; then
+            echo "Nada a mergear (fork ja em dia com upstream/main)."
+          else
+            git commit -q --no-edit -m "sync: merge upstream/main (workflows fork-owned)"
           fi
 
       - name: Push to fork
