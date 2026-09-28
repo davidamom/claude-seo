@@ -42,7 +42,7 @@ content abuse.
 - For per-page hreflang validation, stay inside `seo-hreflang`.
 - For broader scaled-content scoring (entropy of translated pages,
   AI-pattern detection in body), defer to `seo-content` via
-  `claude-seo run content_quality.py`.
+  `"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run content_quality.py`.
 - For "is this translated by Google's own auto-translate widget"
   detection, look for the `.goog-te-banner-frame` iframe. There is **no
   per-mechanism exemption**: in June 2025 Google removed the
@@ -53,7 +53,7 @@ content abuse.
 
 ## Primary sources
 
-- Current QRG (September 11, 2025; 182 pages; nothing newer through 2026-07-09): https://services.google.com/fh/files/misc/hsw-sqrg.pdf
+- Current QRG (September 11, 2025; 182 pages; nothing newer through 2026-09-23): https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf (the services.google.com hsw-sqrg.pdf file is the 36-page 2023 Overview, not the guidelines)
 - John Mueller on MT (multiple SOTR episodes, 2024-2025): MT is OK
   when reviewed by a human; bulk MT without review is abuse.
 
