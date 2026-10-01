@@ -43,20 +43,40 @@ jobs:
       - name: Merge upstream/main (preserving fork commits, workflows fork-owned)
         # GITHUB_TOKEN nunca pode criar/alterar arquivos de workflow no push
         # ("refusing to allow a GitHub App to ... without workflows permission").
-        # Travou o sync de 20/07 a 17/08/2026 (upstream alterou ci.yml/v2.yml) e de
-        # 27/08 a 28/09/2026 (upstream ADICIONOU windows-smoke.yml: o checkout de
-        # origin/main restaura arquivos alterados, mas nao apaga arquivo novo, e o
-        # merge commit ja continha o arquivo). Por isso o merge e feito SEM commit:
-        # restaura os workflows do fork, remove os que o upstream adicionou e so
-        # entao commita. Nenhum commit empurrado toca em .github/workflows.
+        # Travou o sync de 20/07 a 17/08/2026 (upstream alterou ci.yml/v2.yml), de
+        # 27/08 a 28/09/2026 (upstream ADICIONOU windows-smoke.yml) e em 29-30/09/2026
+        # (upstream MODIFICOU windows-smoke.yml, que o fork apagou: conflito
+        # modify/delete faz `git merge` sair com codigo 1 antes da limpeza, e o
+        # driver merge=ours nao cobre conflito de delecao). Por isso o merge e feito
+        # SEM commit e tolerando conflito: conflitos em .github/workflows sao
+        # resolvidos a favor do fork (versao do fork, ou remocao se o fork nao tem o
+        # arquivo); conflito fora dos workflows aborta o merge e falha o job.
         # Mudancas de workflow do upstream entram por merge manual (push de usuario).
         run: |
-          git merge upstream/main --no-commit --no-edit
+          git merge upstream/main --no-commit --no-edit || echo "merge com conflitos; resolvendo workflows fork-owned"
+          unmerged=$(git diff --name-only --diff-filter=U)
+          for f in $unmerged; do
+            case "$f" in
+              .github/workflows/*)
+                if git cat-file -e "origin/main:$f" 2>/dev/null; then
+                  git checkout origin/main -- "$f"
+                else
+                  echo "::warning::Workflow $f nao existe no fork (fork-owned): mantido removido"
+                  git rm -q --cached -- "$f"; rm -f "$f"
+                fi ;;
+              *)
+                echo "::error::Conflito fora de .github/workflows em $f; resolver manualmente (git push de usuario)"
+                git merge --abort; exit 1 ;;
+            esac
+          done
           git checkout origin/main -- .github/workflows/
           added=$(git diff --cached --name-only --diff-filter=A origin/main -- .github/workflows/)
           if [ -n "$added" ]; then
             echo "::warning::Upstream adicionou workflow(s) nao trazidos (fork-owned): $added"
             for f in $added; do git rm -q --cached -- "$f"; rm -f "$f"; done
+          fi
+          if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+            echo "::error::Ainda ha caminhos nao mergeados"; git status --short; exit 1
           fi
           if ! git diff --quiet upstream/main -- .github/workflows/; then
             echo "::warning::Workflows do fork divergem do upstream; sincronize manualmente (git push de usuario) se quiser as mudancas."
