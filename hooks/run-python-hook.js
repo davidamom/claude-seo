@@ -3,6 +3,13 @@
 
 const { spawnSync } = require("child_process");
 
+const PROBE_SCRIPT = "import sys; print(sys.executable); print(sys.version.split()[0])";
+const VERSION_LINE = /^\d+\.\d+/;
+// The Microsoft Store placeholder (AppInstallerPythonRedirector.exe) prints a hint
+// instead of running Python. The hint is the signal; the interpreter path is not,
+// because Store Python itself lives under WindowsApps.
+const STORE_STUB_MESSAGE = /Microsoft Store|App execution alias|was not found|n.o foi encontrado/i;
+
 function stripWrappingQuotes(value) {
   return value.replace(/^["']|["']$/g, "");
 }
@@ -25,16 +32,25 @@ function pythonCandidates() {
 }
 
 function isStoreStubOutput(text) {
-  return /Microsoft Store|WindowsApps|App execution alias|was not found/i.test(text);
+  return STORE_STUB_MESSAGE.test(String(text || ""));
+}
+
+function probeAccepts(status, stdout, stderr) {
+  if (status !== 0) {
+    return false;
+  }
+  const lines = String(stdout || "").trim().split(/\r?\n/);
+  if (lines.length < 2 || !VERSION_LINE.test(lines[lines.length - 1])) {
+    return false;
+  }
+  return !isStoreStubOutput(stderr);
 }
 
 function probe(candidate) {
-  const script = "import sys; print(sys.executable); print(sys.version.split()[0])";
-  const result = spawnSync(candidate.exe, [...candidate.args, "-c", script], {
+  const result = spawnSync(candidate.exe, [...candidate.args, "-c", PROBE_SCRIPT], {
     encoding: "utf8",
   });
-  const output = `${result.stdout || ""}\n${result.stderr || ""}`;
-  return result.status === 0 && Boolean((result.stdout || "").trim()) && !isStoreStubOutput(output);
+  return probeAccepts(result.status, result.stdout, result.stderr);
 }
 
 function main() {
@@ -62,4 +78,8 @@ function main() {
   process.exit(1);
 }
 
-main();
+module.exports = { isStoreStubOutput, probeAccepts };
+
+if (require.main === module) {
+  main();
+}

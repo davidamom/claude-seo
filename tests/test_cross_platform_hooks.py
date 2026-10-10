@@ -76,4 +76,48 @@ def test_windows_installer_prefers_py_launcher_and_rejects_store_stubs() -> None
     python_pos = text.index("Exe = 'python'; Args = @()")
 
     assert py_pos < python3_pos < python_pos
-    assert "Microsoft Store|WindowsApps|App execution alias|was not found" in text
+    assert "Microsoft Store|App execution alias|was not found" in text
+    # Store Python lives under WindowsApps, so the path must never count as the placeholder.
+    assert "Microsoft Store|WindowsApps|App execution alias" not in text
+
+
+def _launcher_probe_accepts(status: int, stdout: str, stderr: str) -> bool:
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node is not available in this test environment")
+
+    code = (
+        "const launcher = require(process.argv[1]);"
+        "const [status, stdout, stderr] = JSON.parse(process.argv[2]);"
+        "process.stdout.write(String(launcher.probeAccepts(status, stdout, stderr)));"
+    )
+    proc = subprocess.run(
+        [node, "-e", code, str(HOOK_LAUNCHER), json.dumps([status, stdout, stderr])],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    return proc.stdout.strip() == "true"
+
+
+STORE_PYTHON_PROBE = (
+    "C:\\Users\\x\\AppData\\Local\\Microsoft\\WindowsApps\\"
+    "PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\python.exe\n3.13.14\n"
+)
+STORE_PLACEHOLDER_HINT = (
+    "Python was not found; run without arguments to install from the Microsoft Store, "
+    "or disable this shortcut from Settings > Apps > Advanced app settings > "
+    "App execution aliases."
+)
+
+
+def test_hook_launcher_accepts_store_python_under_windowsapps() -> None:
+    assert _launcher_probe_accepts(0, STORE_PYTHON_PROBE, "")
+
+
+def test_hook_launcher_rejects_store_placeholder() -> None:
+    assert not _launcher_probe_accepts(9009, STORE_PLACEHOLDER_HINT, "")
+    assert not _launcher_probe_accepts(0, STORE_PLACEHOLDER_HINT, "")
+    assert not _launcher_probe_accepts(0, STORE_PYTHON_PROBE, STORE_PLACEHOLDER_HINT)

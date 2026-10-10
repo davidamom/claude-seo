@@ -74,13 +74,20 @@ function Test-PythonCandidate {
 
     $probeCode = 'import sys; print(sys.executable); print(sys.version.split()[0]); raise SystemExit(0 if sys.version_info >= (3, 10) else 1)'
     $probe = Invoke-External -Exe $Exe -Args @($Args + @('-c', $probeCode)) -Quiet
-    $probeText = ($probe.Output -join "`n")
+    $probeLines = @($probe.Output | Where-Object { $null -ne $_ -and $_.Trim() -ne '' })
 
     if ($probe.ExitCode -ne 0) {
         return $null
     }
 
-    if ($probeText -match 'Microsoft Store|WindowsApps|App execution alias|was not found') {
+    # A real interpreter prints its path and a version line. The Store placeholder prints
+    # a hint instead of running Python; that hint is the signal, never the path, because
+    # Store Python itself lives under the WindowsApps folder.
+    if ($probeLines.Count -lt 2 -or $probeLines[$probeLines.Count - 1] -notmatch '^\d+\.\d+') {
+        return $null
+    }
+
+    if (($probeLines -join "`n") -match 'Microsoft Store|App execution alias|was not found|n.o foi encontrado') {
         return $null
     }
 

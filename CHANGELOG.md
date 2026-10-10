@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `hooks/run-python-hook.js` and `install.ps1` rejected every interpreter whose
+  path contains `WindowsApps`, which is where Microsoft Store Python lives, so on
+  machines whose only Python is the Store build the PostToolUse hook failed on
+  every Edit and Write with "Claude SEO hook could not find Python". The probe
+  now accepts an interpreter that exits 0 and prints a version line, and only
+  the Store placeholder's own hint (English or Portuguese) marks a candidate as
+  the placeholder; the path is never a signal. The launcher exports
+  `probeAccepts` for tests.
+
 ## [2.4.2] - 2026-10-04
 
 seo-cockpit, Google sign-in through your own account, and a schema-hook fix.
